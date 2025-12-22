@@ -20,7 +20,7 @@ A Thor service instance that coordinates drones, scheduling, and job execution.
 A logical isolation boundary representing an organization or user group that owns workloads, policies, and resource quotas.
 
 ### Workload
-A self-contained application that performs a unit of computation.
+A self-contained application that is able to perform a unit of computation.
 
 ### Asset
 An external resource required by a workload at runtime, such as model weights or adapters, not embedded in the workload itself.
