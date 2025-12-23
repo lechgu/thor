@@ -10,11 +10,11 @@ Thor is a distributed, multi-tenant orchestration platform for scheduling and ex
 ### Node
 A physical or virtual computer equipped with AI-capable hardware and suitable for executing workloads.
 
-### Drone  
+### Drone
 A software agent running on a node that connects to Thor, reports node capabilities, and executes assigned work.
 
 ### Hive
-A Thor service instance that coordinates drones, scheduling, and job execution.
+A Thor service instance that coordinates Drones, scheduling, and job execution.
 
 ### Tenant
 A logical isolation boundary representing an organization or user group that owns workloads, policies, and resource quotas.
@@ -43,7 +43,8 @@ A tenant-submitted request to execute a workload, represented as a payload with 
 Structured information associated with a job that guides scheduling, execution, and policy enforcement.
 
 ### Scheduler
-A control-plane component responsible for matching jobs to compatible nodes and dispatching commands to drones.
+A logical control-plane function responsible for matching jobs to compatible nodes and selecting execution targets.  
+The scheduler is implemented as part of the Hive **Orchestrator**.
 
 ### Control Plane Data Store
 A persistent store maintaining system state, including tenants, nodes, jobs, and related metadata.
@@ -55,43 +56,43 @@ A persistent store maintaining system state, including tenants, nodes, jobs, and
 ### Node Onboarding
 Node onboarding registers a node with Thor and establishes its identity, ownership, and policy context.
 
-During onboarding, the drone is provisioned with configuration and credentials required to connect to a hive. A node is registered but not schedulable until the drone connects and reports capabilities.
+During onboarding, the Drone is provisioned with configuration and credentials required to connect to a Hive. A node is registered but not schedulable until the Drone connects and reports capabilities.
 
 ### Drone Connection and Registration
-After onboarding, the drone establishes a persistent connection to a hive, authenticates, and registers the node.
+After onboarding, the Drone establishes a persistent connection to a Hive, authenticates, and registers the node.
 
 Registration enables liveness tracking and confirms readiness to participate in scheduling and execution.
 
 ### Capability Discovery and Reporting
-The drone inspects the node and reports its capabilities to the hive, which records them in the control plane data store.
+The Drone inspects the node and reports its capabilities to the Hive, which records them in the control plane data store.
 
 A node becomes schedulable only after its capabilities are successfully reported and acknowledged.
 
 ### Idle State and Command Channel
-Once schedulable, the drone enters an idle state and maintains an active command channel with the hive.
+Once schedulable, the Drone enters an idle state and maintains an active command channel with the Hive.
 
-Through this channel, the hive issues commands such as asset acquisition, workload instantiation, or job execution. While idle, the drone continues reporting liveness and availability.
+Through this channel, the Hive issues commands such as asset acquisition, workload instantiation, or job execution. While idle, the Drone continues reporting liveness and availability.
 
 ### Command Dispatch
-The scheduler selects an idle, compatible node and dispatches a command to the corresponding drone.
+The Orchestrator selects an idle, compatible node and dispatches a command to the corresponding Drone.
 
 Dispatch coordination ensures the node remains available at assignment time; failed dispatches result in rescheduling.
 
 ### Asset Acquisition
-Before execution, the drone ensures all required assets are available on the node.
+Before execution, the Drone ensures all required assets are available on the node.
 
 Asset access is constrained by tenant isolation and policy.
 
 ### Workload Instantiation
-The drone ensures a suitable workload instance is available on the node, either by starting a new instance or reusing an existing one.
+The Drone ensures a suitable workload instance is available on the node, either by starting a new instance or reusing an existing one.
 
 Instantiation prepares the runtime environment, applies configuration, and makes assets available to the workload.
 
 ### Job Execution
-The drone submits the job to the workload instance and monitors execution until completion, failure, or termination.
+The Drone submits the job to the workload instance and monitors execution until completion, failure, or termination.
 
 ### Status Reporting and Completion
-During execution, the drone reports state transitions and progress to the hive.
+During execution, the Drone reports state transitions and progress to the Hive.
 
 Upon completion, the final outcome is recorded in the control plane data store and node availability is updated.
 
@@ -112,12 +113,12 @@ Candidate nodes are filtered by evaluating whether reported capabilities satisfy
 Only compatible nodes proceed to selection.
 
 ### Node Selection
-From compatible candidates, the scheduler selects a node based on availability, load, quotas, and scheduling preferences.
+From compatible candidates, the Orchestrator selects a node based on availability, load, quotas, and scheduling preferences.
 
 Selection balances throughput and fairness while respecting priority.
 
 ### Dispatch and Reservation
-The selected node receives a dispatch command via its drone.
+The selected node receives a dispatch command via its Drone.
 
 If dispatch fails, the job remains pending and may be rescheduled.
 
@@ -150,7 +151,7 @@ Nodes may be tenant-associated or shared. Ownership is established during onboar
 Workloads execute in isolated contexts. Asset access is tenant-scoped and limited to what is explicitly permitted by job metadata and policy.
 
 ### Scheduling Isolation
-The scheduler enforces isolation through tenant-scoped eligibility, quotas, and fairness controls.
+The Orchestrator enforces isolation through tenant-scoped eligibility, quotas, and fairness controls.
 
 ### Control Plane Isolation
 Control-plane state is logically partitioned by tenant and protected by access controls.
@@ -180,7 +181,7 @@ Persistent state enables control-plane components to recover from restarts witho
 Thor enforces security through identity, policy, and isolation across control and execution planes.
 
 ### Identity and Authentication
-Tenants authenticate when submitting jobs; drones authenticate to hives using onboarding credentials.
+Tenants authenticate when submitting jobs; Drones authenticate to Hives using onboarding credentials.
 
 ### Authorization and Policy Enforcement
 Authorization is based on tenant identity, job metadata, and system policy, and is enforced across scheduling, execution, and asset access.
@@ -201,10 +202,10 @@ Control-plane data is protected through strict access controls and tenant-aware 
 Thor provides observability and auditing to support monitoring, debugging, and accountability.
 
 ### Execution Observability
-Job and node lifecycles are tracked through status updates recorded by the hive.
+Job and node lifecycles are tracked through status updates recorded by the Hive.
 
 ### Metrics and Monitoring
-Control-plane components and drones emit metrics for scheduling activity, execution, and resource usage.
+Control-plane components and Drones emit metrics for scheduling activity, execution, and resource usage.
 
 ### Logging and Events
 Key system events are recorded to provide a chronological record of activity and failures.
@@ -212,25 +213,124 @@ Key system events are recorded to provide a chronological record of activity and
 ### Auditing
 Security-relevant actions such as job submission, node onboarding, and policy decisions are auditable and retained per tenant.
 
+---
+
 ## Non-Goals
 
 The following items are explicitly out of scope for Thor at this stage:
 
 ### Geographic Affinity and Data Locality Guarantees
-
-Thor does not currently provide guarantees or constraints related to geographic locality, regional affinity, or data residency. Hives may be deployed in multiple locations, but scheduling decisions are not inherently aware of geographic proximity unless explicitly modeled through capabilities or policy.
-
-Any requirements related to regional placement, data sovereignty, or latency-sensitive execution must be expressed externally or through higher-level policy mechanisms.
+Thor does not provide guarantees or constraints related to geographic locality, regional affinity, or data residency.
 
 ### Network Topology Optimization
-
-Thor does not optimize scheduling based on network topology, bandwidth, or latency between nodes, hives, or external systems.
+Thor does not optimize scheduling based on network topology, bandwidth, or latency.
 
 ### Workload Placement Optimization
-
-Thor does not attempt to globally optimize workload placement for cost, performance, or energy efficiency beyond basic scheduling constraints and fairness policies.
+Thor does not globally optimize workload placement for cost, performance, or energy efficiency.
 
 ### Workflow Semantics
+Thor does not provide native support for multi-step workflows or job dependency graphs.
 
-Thor does not provide native support for multi-step workflows, dependency graphs, or orchestration of job pipelines. Such behavior may be implemented externally or layered on top of Thor.
+---
 
+## Bird’s-eye System Diagram
+See `diagram.png` for a high-level system overview.
+
+---
+
+## Protocols
+
+### drone <-> hive
+A bidirectional gRPC stream used for command dispatch, status reporting, and liveness (non-exhaustive):
+
+- **ping / pong**
+- **get_capabilities / capabilities**
+- **get_assets / assets / ensure_assets**
+- **get_workloads / workloads / ensure_workloads**
+- **execute_job**
+- **job_result**
+
+### DevOps Endpoint
+A REST API used by `thorctl` for operational control (non-exhaustive):
+
+- `api/v1/tenants`
+- `api/v1/jobs`
+- `api/v1/nodes`
+- `api/v1/tokens`
+
+### Tenant-Facing Endpoint
+- `POST api/v1/jobs` — submit a job and receive a result or error.
+
+### Short-Running and Long-Running Jobs
+The current design assumes short-running jobs. Long-running job support may introduce queue-backed execution without altering the core streaming model.
+
+---
+
+## Proposed Tech Stack
+
+### Node
+- Debian (stable), x86_64
+- systemd
+- OpenSSH server
+- containerd or Docker Engine
+- NVIDIA CUDA support
+
+### Control Plane Data Store
+- PostgreSQL
+
+### Control Plane Communication
+- Bidirectional gRPC streaming between Hive and Drone
+
+### Assets
+- Object storage (e.g. S3)
+- Cached on nodes
+
+### Main Programming Language
+- Go
+
+#### Core Libraries
+- gRPC / Protobuf
+- samber/do
+- cobra
+- logrus
+- gin
+- goose
+- gorm (optional)
+- go-containerregistry
+- containerd
+
+---
+
+## Produced Binary Artifacts
+
+### drone
+Node agent responsible for execution and reporting.
+
+### hive
+Single control-plane deployable providing orchestration, APIs, and coordination.
+
+> May be split into multiple services in the future if required.
+
+### thorctl
+CLI tool for operators and automation.
+
+> A web dashboard may be added later; CLI provides equivalent functionality initially.
+
+---
+
+## Hive: Main Components
+
+### Drone Manager
+Manages Drone connections, authentication, and command channels.
+
+### Orchestrator
+Implements scheduling logic, node selection, dispatch coordination, and job state transitions.
+
+### Job API
+REST endpoints for job submission and inspection.
+
+### Asset and Policy Coordination
+Resolves asset access and enforces tenant isolation and policy constraints.
+
+### Events and Reconciliation
+Emits events, reconciles liveness, and handles recovery.
