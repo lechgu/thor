@@ -247,8 +247,8 @@ A bidirectional gRPC stream used for command dispatch, status reporting, and liv
 - **get_capabilities / capabilities**
 - **get_assets / assets / ensure_assets**
 - **get_workloads / workloads / ensure_workloads**
-- **execute_job**
-- **job_result**
+- **execute_job / job_result **
+
 
 ### DevOps Endpoint
 A REST API used by `thorctl` for operational control (non-exhaustive):
@@ -269,14 +269,14 @@ The current design assumes short-running jobs. Long-running job support may intr
 ## Proposed Tech Stack
 
 ### Node
-- Debian (stable), x86_64
+- Debian 13 (stable), x86_64
 - systemd
 - OpenSSH server
-- containerd or Docker Engine
+- containerd (or Docker Engine)
 - NVIDIA CUDA support
 
 ### Control Plane Data Store
-- PostgreSQL
+- PostgreSQL 17
 
 ### Control Plane Communication
 - Bidirectional gRPC streaming between Hive and Drone
@@ -284,6 +284,9 @@ The current design assumes short-running jobs. Long-running job support may intr
 ### Assets
 - Object storage (e.g. S3)
 - Cached on nodes
+
+### Workload storage
+- Container imager registry (e.g. ACR)
 
 ### Main Programming Language
 - Go
@@ -298,6 +301,7 @@ The current design assumes short-running jobs. Long-running job support may intr
 - gorm (optional) (database ORM package, if needed)
 - go-containerregistry (download/sync container images)
 - containerd (spin containerd/docker containers)
+- gopkg.in/yaml (yaml confuguration parsing)
 
 ---
 
@@ -316,6 +320,17 @@ CLI tool for operators and automation.
 
 > A web dashboard may be added later; CLI provides equivalent functionality initially.
 
+## Configuration
+Both hive and the drone configuration are in the human editable yaml files.
+
+---
+## Authentication
+All actors in the system (tenants, devops staff, nodes) are authenticated. everyone is issued a JWT token which encapsulates actor's id and its role. Token are issued over the devops API endpoint, usually using the CLI tool. Federated authentication (Google, Azure) etc can be added later, if necessary.
+
+---
+## Transport-level security
+All network communication (gRPC streams, REST endpoints, Postres connections) are protected by the TLS enabled transport. Certificate and key management are out of scope for this document
+
 ---
 
 ## Hive: Main Components
@@ -327,10 +342,10 @@ Manages Drone connections, authentication, and command channels.
 Implements scheduling logic, node selection, dispatch coordination, and job state transitions.
 
 ### Job API
-REST endpoints for job submission and inspection.
+REST endpoint for job submission and inspection.
 
-### Asset and Policy Coordination
-Resolves asset access and enforces tenant isolation and policy constraints.
-
-### Events and Reconciliation
-Emits events, reconciles liveness, and handles recovery.
+### Devops API
+REST endpoint for devops operations 
+- tenant management
+- node management
+- token management
