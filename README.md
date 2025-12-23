@@ -289,15 +289,15 @@ The current design assumes short-running jobs. Long-running job support may intr
 - Go
 
 #### Core Libraries
-- gRPC / Protobuf
-- samber/do
-- cobra
-- logrus
-- gin
-- goose
-- gorm (optional)
-- go-containerregistry
-- containerd
+- gRPC / Protobuf (drone to hive communication)
+- samber/do (lihtweight dependency injection toolkit)
+- cobra (cli toolkit)
+- logrus (structured logging package)
+- gin (lightweight REST backend ramework)
+- goose (database schema migrations)
+- gorm (optional) (database ORM package, if needed)
+- go-containerregistry (download/sync container images)
+- containerd (spin containerd/docker containers)
 
 ---
 
